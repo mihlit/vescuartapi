@@ -1,2 +1,3 @@
-# vescuartapi
-Allows you to communicate with VESC motor controller used mostly for e-bikes or e-skates. For Arduino, AVR and Linux
+This is VescUartApi library. It provides API to interface with VESC motor controllers through uart port.
+
+Tested with Arduino Nano, Mini, Mega, STM32 Blue Pill, ESP32 Lolin D32
