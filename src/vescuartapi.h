@@ -73,7 +73,7 @@ class VescUartApi {
     int16_t buflast;   // last valid byte or -1 if buffer empty
     void(*getValuesCB)(VescUartApi *);
     
-    void rcvd_GET_VALUES(const uint8_t *data, uint16_t packetsize);
+    void rcvd_GET_VALUES(const uint8_t *data, uint16_t packetsize, uint8_t selective);
     void rcvd_FW_VERSION(const uint8_t *data, uint16_t packetsize);
     int16_t sendCommandInplace(uint8_t *buf, int16_t cmdlen);
     

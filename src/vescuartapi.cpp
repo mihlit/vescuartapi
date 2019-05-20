@@ -168,29 +168,80 @@ void VescUartApi::rcvd_FW_VERSION(const uint8_t *data, uint16_t datasize)
   fw_version[1] = data[1];
 }
 
-void VescUartApi::rcvd_GET_VALUES(const uint8_t *data, uint16_t datasize)
+void VescUartApi::rcvd_GET_VALUES(const uint8_t *data, uint16_t datasize, uint8_t selective)
 {
   int32_t i = 0;
-  if (datasize < 54) return;
+  uint32_t mask = 0xffffffff;
+  if (selective)
+    mask = buffer_get_uint32(data, &i);
+  else if (datasize < 54) return;
   // for data format see https://github.com/vedderb/bldc/blob/master/commands.c
-  values_data.temp_fet = buffer_get_float16(data, 10.0, &i);
-  values_data.temp_motor = buffer_get_float16(data, 10.0, &i);
-  values_data.avg_motor_current = buffer_get_float32(data, 100.0, &i);
-  values_data.avg_input_current = buffer_get_float32(data, 100.0, &i);
-// values_data.avg_id = buffer_get_float32(data, 100.0, &i);
-  buffer_get_float32(data, 100.0, &i);
-// values_data.avg_iq = buffer_get_float32(data, 100.0, &i);
-  buffer_get_float32(data, 100.0, &i);
-  values_data.duty_cycle_now = buffer_get_float16(data, 1000.0, &i);
-  values_data.rpm = buffer_get_float32(data, 1.0, &i);
+  if (mask & ((uint32_t)1 << 0)) {
+    values_data.temp_fet = buffer_get_float16(data, 10.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 1)) {
+    values_data.temp_motor = buffer_get_float16(data, 10.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 2)) {
+    values_data.avg_motor_current = buffer_get_float32(data, 100.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 3)) {
+    values_data.avg_input_current = buffer_get_float32(data, 100.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 4)) {
+    // values_data.avg_id = buffer_get_float32(data, 100.0, &i);
+    buffer_get_float32(data, 100.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 5)) {
+    // values_data.avg_iq = buffer_get_float32(data, 100.0, &i);
+    buffer_get_float32(data, 100.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 6)) {
+    values_data.duty_cycle_now = buffer_get_float16(data, 1000.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 7)) {
+    values_data.rpm = buffer_get_float32(data, 1.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 8)) {
   values_data.input_voltage = buffer_get_float16(data, 10.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 9)) {
   values_data.amp_hours = buffer_get_float32(data, 10000.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 10)) {
   values_data.amp_hours_charged = buffer_get_float32(data, 10000.0, &i);
-  values_data.tachometer_value = buffer_get_int32(data, &i);
-  values_data.tachometer_abs_value = buffer_get_int32(data, &i);
-  values_data.fault = buffer_get_int8(data, &i);
-  values_data.pid_pos = buffer_get_float32(data, 1000000.0, &i);
-  values_data.controller_id = buffer_get_int8(data, &i);
+  }
+  if (mask & ((uint32_t)1 << 11)) {
+    // values_data.watt_hours = buffer_get_int32(data, &i);
+    buffer_get_int32(data, &i);
+  }
+  if (mask & ((uint32_t)1 << 12)) {
+    // values_data.watt_hours_charged = buffer_get_int32(data, &i);
+    buffer_get_int32(data, &i);
+  }
+  if (mask & ((uint32_t)1 << 13)) {
+    values_data.tachometer_value = buffer_get_int32(data, &i);
+  }
+  if (mask & ((uint32_t)1 << 14)) {
+    values_data.tachometer_abs_value = buffer_get_int32(data, &i);
+  }
+  if (mask & ((uint32_t)1 << 15)) {
+    values_data.fault = buffer_get_int8(data, &i);
+  }
+  if (mask & ((uint32_t)1 << 16)) {
+    values_data.pid_pos = buffer_get_float32(data, 1000000.0, &i);
+  }
+  if (mask & ((uint32_t)1 << 17)) {
+    values_data.controller_id = buffer_get_int8(data, &i);
+  }
+  if (mask & ((uint32_t)1 << 18)) {
+    // values_data.ntc_temp_mos1 = buffer_get_float16(data, 10.0, &i);
+    // values_data.ntc_temp_mos2 = buffer_get_float16(data, 10.0, &i);
+    // values_data.ntc_temp_mos3 = buffer_get_float16(data, 10.0, &i);
+    buffer_get_float16(data, 10.0, &i);
+    buffer_get_float16(data, 10.0, &i);
+    buffer_get_float16(data, 10.0, &i);
+  }
  
   if (getValuesCB) getValuesCB(this);
 }
@@ -203,7 +254,8 @@ void VescUartApi::consumePacket(const uint8_t *packet, uint16_t packetsize)
   switch(packetType)
   {
     case COMM_GET_VALUES:
-	rcvd_GET_VALUES(packet, packetsize);
+    case COMM_GET_VALUES_SELECTIVE:
+	rcvd_GET_VALUES(packet, packetsize, packetType==COMM_GET_VALUES_SELECTIVE);
       break;
 
     case COMM_FW_VERSION:
